@@ -1,0 +1,22 @@
+{
+  "total_curated_go_terms": 5,
+  "go_terms_by_category": {
+    "metabolism": 3,
+    "cell_death": 2
+  },
+  "go_terms_by_direction": {
+    "TUSC2+ Upregulated": 5
+  },
+  "most_significant_go_term": {
+    "term": "Oxidative Phosphorylation (GO:0006119)",
+    "go_id": "GO:0006119",
+    "p_value": 4.446681918687355e-19
+  },
+  "enriched_go_ids": [
+    "GO:0006119",
+    "GO:0045333",
+    "GO:0006096",
+    "GO:0042981",
+    "GO:0043066"
+  ]
+}

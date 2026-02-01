@@ -1,0 +1,313 @@
+# =============================================================================
+# NK Cell Analysis Project .gitignore
+# =============================================================================
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# =============================================================================
+# Jupyter Notebooks
+# =============================================================================
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+profile_default/
+ipython_config.py
+
+# Remove previous ipynb_checkpoints
+#   git rm -r .ipynb_checkpoints/
+
+# =============================================================================
+# Scientific Computing & Data Science
+# =============================================================================
+# Large data files (single-cell data)
+*.h5ad
+*.h5
+*.hdf5
+*.zarr/
+
+# R data files
+*.rds
+*.RData
+*.Rhistory
+
+# Matrix files
+*.mtx
+*.mtx.gz
+
+# Large text data files
+*.tsv
+*.txt.gz
+*.csv.gz
+data/raw/*.csv
+data/raw/*.txt
+data/processed/*.csv
+data/processed/*.txt
+
+# Compressed archives
+*.zip
+*.tar.gz
+*.7z
+*.gz
+*.bz2
+
+# =============================================================================
+# Analysis Outputs (Exclude most, keep small summary files)
+# =============================================================================
+# Image outputs
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.svg
+*.tiff
+*.eps
+
+# Analysis output directories
+outputs/
+*_output/
+*_Output/
+figures/
+plots/
+results/
+temp/
+tmp/
+cache/
+
+# Project-specific large output directories
+Combined_NK_TUSC2_Analysis_Output/
+TCGAdata/Analysis_Python_Output/
+TCGAdata/Analysis_Python_Output_v3/
+TCGAdata/rna/
+TCGAdata/xml/
+TCGAdata/SCADEN_Output/
+TumorFractionOutput/
+
+# Keep small summary CSV files but exclude large data CSVs
+*_data.csv
+*_matrix.csv
+*_counts.csv
+*_expression.csv
+*gdc_*.csv
+*TCGA_*.csv
+
+# Temporary data directories
+common_temp_data/
+temp_data/
+**/temp/
+**/tmp/
+
+# =============================================================================
+# IDE and Editor Files
+# =============================================================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# Operating System Files
+# =============================================================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# Logs and Temporary Files
+# =============================================================================
+*.log
+*.log.*
+logs/
+log/
+
+# =============================================================================
+# Project-Specific Excludes
+# =============================================================================
+# Large TCGA data files
+*.xml
+gdc_manifest*.txt
+*_manifest.txt
+
+# SCADEN training outputs
+scaden_training.log
+*/SCADEN_Output/**
+
+# CIBERSORTx files (keep small signature matrices, exclude large results)
+CIBERSORTx_Results_*.txt
+CIBERSORTx_Adjusted_*.txt
+*_Window*.txt
+
+# Specific large directories to exclude entirely
+data/raw/
+data/processed/*.h5ad
+TCGAdata/rna/
+TCGAdata/xml/
+
+# =============================================================================
+# Files to KEEP (Override above patterns)
+# =============================================================================
+# Important small configuration and documentation files
+!README.md
+!*.md
+!requirements.txt
+!setup.py
+!pyproject.toml
+!environment.yml
+
+# Keep small summary/metadata files
+!*_summary.csv
+!*_metadata.csv
+!*_config.csv
+!*_parameters.csv
+
+# Keep signature matrices and gene lists
+!*signature*.txt
+!*markers*.txt
+!*genes*.txt
+!NK_*.txt
+
+# Keep small figures if needed (uncomment if you want to track some plots)
+# !summary_plots/*.png
+# !key_figures/*.pdf
+
+# Keep CIBERSORTx signature files
+!*signature_matrix*.tsv
+!*signature_matrix*.txt
+!NK_reference_matrix*.txt
+
+# =============================================================================
+# Important Notes
+# =============================================================================
+# This .gitignore excludes:
+# 1. Large data files (.h5ad, .tsv, .xml, etc.)
+# 2. Analysis outputs (plots, results directories)
+# 3. Temporary and cache files
+# 4. System and IDE files
+# 
+# It preserves:
+# 1. Python scripts and notebooks (code)
+# 2. Documentation files (.md)
+# 3. Small configuration files
+# 4. Gene signature files and markers
+# 5. Small summary CSV files
+#
+# Remember to:
+# - Review before first commit
+# - Add large files to Git LFS if needed
+# - Update this file as project evolves 
