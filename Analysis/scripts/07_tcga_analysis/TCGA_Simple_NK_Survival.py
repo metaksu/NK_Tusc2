@@ -113,6 +113,28 @@ CONFIG = {
     "thresholds": DEFAULT_THRESHOLDS
 }
 
+# Display name mapping for NK subtypes and analysis scenarios
+NK_DISPLAY_NAMES = {
+    "Bright_NK": "NK2",
+    "Cytotoxic_NK": "NK1",
+    "NK_Total": "NK Total",
+}
+
+SCENARIO_DISPLAY_NAMES = {
+    "Overall": "All Patients",
+}
+
+def get_display_name(internal_name: str) -> str:
+    """Map internal column/scenario names to publication-ready display labels."""
+    return NK_DISPLAY_NAMES.get(internal_name, 
+           SCENARIO_DISPLAY_NAMES.get(internal_name, internal_name))
+
+def sanitize_filename(name: str) -> str:
+    """Convert a display label to a safe filename component."""
+    return (name.replace("/", "_").replace(" ", "_")
+                .replace("≤", "leq").replace(">", "gt")
+                .replace("≥", "geq").replace("<", "lt"))
+
 # =============================================================================
 # Core Analysis Pipeline
 # =============================================================================
@@ -299,13 +321,15 @@ def preprocess_simple(df: pd.DataFrame, config: Dict) -> Optional[pd.DataFrame]:
     
     # Create age stratification groups
     if "Age_at_Diagnosis" in df_clean.columns:
+        young_label = f"Age ≤{config['age_cutoff']}"
+        old_label = f"Age >{config['age_cutoff']}"
         df_clean["Age_Group"] = pd.cut(
             df_clean["Age_at_Diagnosis"], 
             bins=[0, config["age_cutoff"], 120], 
-            labels=["Young", "Old"]
+            labels=[young_label, old_label]
         )
         age_counts = df_clean["Age_Group"].value_counts()
-        print(f"Age stratification: {age_counts.get('Young', 0)} young (≤{config['age_cutoff']}) vs {age_counts.get('Old', 0)} older patients")
+        print(f"Age stratification: {age_counts.get(young_label, 0)} ({young_label}) vs {age_counts.get(old_label, 0)} ({old_label})")
     else:
         print("Warning: Age data not available for stratification")
     
@@ -379,8 +403,8 @@ def calculate_cox_simple(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
     
     # Add age-stratified analyses if age data available
     if "Age_Group" in df.columns:
-        scenarios["Young"] = df[df["Age_Group"] == "Young"].copy()
-        scenarios["Old"] = df[df["Age_Group"] == "Old"].copy()
+        for label in df["Age_Group"].cat.categories:
+            scenarios[str(label)] = df[df["Age_Group"] == label].copy()
     
     results = []
     
@@ -1031,9 +1055,9 @@ def create_nk_km_plot(
             try:
                 subtitle_parts = []
                 if scenario_name:
-                    subtitle_parts.append(f"Scenario: {scenario_name}")
+                    subtitle_parts.append(scenario_name)
                 if variable_name:
-                    subtitle_parts.append(f"NK Variable: {variable_name}")
+                    subtitle_parts.append(variable_name)
                 
                 if subtitle_parts:
                     subtitle = " | ".join(subtitle_parts)
@@ -1118,8 +1142,8 @@ def generate_km_plots(
     
     # Add age-based scenarios if age data available
     if "Age_Group" in survival_df.columns:
-        scenarios["Young"] = survival_df[survival_df["Age_Group"] == "Young"].copy()
-        scenarios["Old"] = survival_df[survival_df["Age_Group"] == "Old"].copy()
+        for label in survival_df["Age_Group"].cat.categories:
+            scenarios[str(label)] = survival_df[survival_df["Age_Group"] == label].copy()
     
     created_plots = []
     
@@ -1173,14 +1197,16 @@ def generate_km_plots(
             except:
                 logrank_p = np.nan
             
-            # Create plot
+            # Create plot with publication display names
             try:
-                title = f"NK Cell Survival Analysis: {nk_var}"
-                group_labels = [f"High {nk_var}", f"Low {nk_var}"]
+                nk_display = get_display_name(nk_var)
+                scenario_display = get_display_name(scenario_name)
+                title = f"NK Cell Survival Analysis: {nk_display} — {scenario_display}"
+                group_labels = [f"High {nk_display}", f"Low {nk_display}"]
                 
                 # Save path
-                safe_nk_var = nk_var.replace("/", "_").replace(" ", "_")
-                safe_scenario = scenario_name.replace("/", "_").replace(" ", "_")
+                safe_nk_var = sanitize_filename(nk_var)
+                safe_scenario = sanitize_filename(scenario_name)
                 save_path = km_plots_dir / f"{config['cancer_type']}_{safe_scenario}_{safe_nk_var}_KM.png"
                 
                 fig, axes = create_nk_km_plot(
@@ -1194,8 +1220,8 @@ def generate_km_plots(
                     p_value=logrank_p,
                     fdr_q_value=result["FDR_Q_Value"],
                     ci_95=(result["HR_CI_Lower"], result["HR_CI_Upper"]),
-                    variable_name=nk_var,
-                    scenario_name=scenario_name,
+                    variable_name=nk_display,
+                    scenario_name=scenario_display,
                     font_size_base=11
                 )
                 
@@ -1279,14 +1305,22 @@ def create_nk_forest_plot(
         axis=1
     )
     
+    # Map internal names to publication display names
+    forest_data['variable_display'] = forest_data['variable'].map(
+        lambda x: get_display_name(x)
+    )
+    forest_data['scenario_display'] = forest_data['scenario'].map(
+        lambda x: get_display_name(x)
+    )
+    
     # Add groups for better organization
     forest_data['group'] = forest_data['variable'].apply(
         lambda x: 'Individual NK Subtypes' if x in ['Bright_NK', 'Cytotoxic_NK'] else 'Combined NK Total'
     )
     
-    # Create display labels
+    # Create display labels using mapped names
     forest_data['display_variable'] = forest_data.apply(
-        lambda row: f"{row['variable']} ({row['scenario']})", axis=1
+        lambda row: f"{row['variable_display']} ({row['scenario_display']})", axis=1
     )
     
     # Sort for better presentation
@@ -1409,8 +1443,8 @@ def plot_simple(results_df: pd.DataFrame, config: Dict) -> pd.DataFrame:
         plt.errorbar(hr, y_pos, xerr=[[hr - ci_lower], [ci_upper - hr]], 
                     fmt='o', color=color, capsize=5, markersize=8, linewidth=2)
         
-        # Add analysis label with significance indicator
-        label = f"{row['Scenario']} - {row['Variable']}"
+        # Add analysis label with significance indicator (use display names)
+        label = f"{get_display_name(row['Scenario'])} — {get_display_name(row['Variable'])}"
         significance = "***" if p_value < 0.001 else "**" if p_value < 0.01 else "*" if p_value < 0.05 else ""
         
         plt.text(hr + 0.1, y_pos, f"{label} (p={p_value:.3f}){significance}", 
@@ -1445,8 +1479,10 @@ def plot_simple(results_df: pd.DataFrame, config: Dict) -> pd.DataFrame:
     # Export detailed results table
     csv_file = os.path.join(config["output_dir"], f"{config['cancer_type']}_NK_Survival_Results.csv")
     
-    # Format results for publication
+    # Format results for publication with display names
     export_df = results_df.copy()
+    export_df['Cohort'] = export_df['Scenario'].map(get_display_name)
+    export_df['NK_Subtype'] = export_df['Variable'].map(get_display_name)
     export_df['HR_95CI'] = export_df.apply(
         lambda row: f"{row['HR']:.3f} ({row['HR_CI_Lower']:.3f}-{row['HR_CI_Upper']:.3f})", axis=1
     )
@@ -1456,7 +1492,7 @@ def plot_simple(results_df: pd.DataFrame, config: Dict) -> pd.DataFrame:
     
     # Select and reorder columns for publication
     publication_columns = [
-        'Scenario', 'Variable', 'Sample_Size', 'Events', 
+        'Cohort', 'NK_Subtype', 'Sample_Size', 'Events', 
         'HR_95CI', 'P_Value_Formatted', 'FDR_Q_Value', 'Risk_Direction'
     ]
     
@@ -1593,7 +1629,7 @@ def main() -> None:
         if not significant.empty:
             for idx, row in significant.head(3).iterrows():
                 risk_direction = "protective" if row['HR'] < 1 else "harmful"
-                print(f"  {row['Scenario']} - {row['Variable']}: {risk_direction} effect")
+                print(f"  {get_display_name(row['Scenario'])} — {get_display_name(row['Variable'])}: {risk_direction} effect")
                 print(f"    HR = {row['HR']:.3f} [95% CI: {row['HR_CI_Lower']:.3f}-{row['HR_CI_Upper']:.3f}], p = {row['P_Value']:.3f}")
         else:
             print("  No statistically significant associations identified (all p > 0.05)")
